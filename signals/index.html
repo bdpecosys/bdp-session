@@ -403,8 +403,8 @@ html, body { min-height: 100vh; font-family: "DM Sans", sans-serif; background: 
   <span id="footer-count">—</span>
 </footer>
 
-<script>
-// ── CONFIG ────────────────────────────────────────────────────────────────
+<script charset="utf-8">
+// -- CONFIG ----------------------------------------------------------------
 const BASE_URL = 'https://session.bdpartners.co';
 const QUERIES = [
   {
@@ -516,7 +516,7 @@ var currentSignalForModal = null;
 var oppCounter = 1;
 var proxyStats = {};
 
-// ── FETCH WITH FALLBACK ────────────────────────────────────────────────────
+// -- FETCH WITH FALLBACK ----------------------------------------------------
 function fetchWithFallback(url) {
   var i = 0;
   function tryNext() {
@@ -591,9 +591,9 @@ function formatDate(d) {
   return d.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
 }
 
-// ── LOAD ALL ───────────────────────────────────────────────────────────────
+// -- LOAD ALL ---------------------------------------------------------------
 function loadAll(forceRefresh) {
-  // ── SESSION CACHE ──────────────────────────────────────────────────────
+  // -- SESSION CACHE ------------------------------------------------------
   var CACHE_KEY = 'bdp_signals_cache_v2';
   var CACHE_TTL = 30 * 60 * 1000; // 30 minutes
   if (!forceRefresh) {
@@ -606,15 +606,15 @@ function loadAll(forceRefresh) {
         });
         document.getElementById('loading-state').style.display = 'none';
         document.getElementById('signals-container').style.display = 'block';
-        document.getElementById('last-updated').textContent = 'Cached · ' + new Date(cached.ts).toLocaleTimeString();
+        document.getElementById('last-updated').textContent = 'Cached: ' + new Date(cached.ts).toLocaleTimeString();
         updateStats();
         applyFilters();
-        setStatus('done', 'From cache · ' + allSignals.length + ' signals · refresh to update', '');
+        setStatus('done', 'From cache: ' + allSignals.length + ' signals | refresh to update', '');
         return;
       }
     } catch(e) {}
   }
-  // ── END CACHE CHECK ───────────────────────────────────────────────────
+  // -- END CACHE CHECK ---------------------------------------------------
   allSignals = [];
   proxyStats = {};
   var debugEl = document.getElementById('debug-panel');
@@ -630,7 +630,7 @@ function loadAll(forceRefresh) {
     return fetchQuery(q).then(function(results) {
       allSignals = allSignals.concat(results);
       done++;
-      setStatus('loading', 'Loading...', done + ' / ' + QUERIES.length + ' done · ' + allSignals.length + ' signals');
+      setStatus('loading', 'Loading...', done + ' / ' + QUERIES.length + ' done: ' + allSignals.length + ' signals');
     });
   })).then(function() {
     allSignals = deduplicateSignals(allSignals);
@@ -658,7 +658,7 @@ function loadAll(forceRefresh) {
       showDebug();
     } else {
       var proxyName = Object.keys(proxyStats)[0] || 'unknown';
-      setStatus('done', 'Live · ' + allSignals.length + ' signals · via ' + proxyName, '');
+      setStatus('done', 'Live: ' + allSignals.length + ' signals via ' + proxyName, '');
     }
   });
 }
@@ -677,7 +677,7 @@ function showDebug() {
   el.style.display = 'block';
 }
 
-// ── RENDER ─────────────────────────────────────────────────────────────────
+// -- RENDER -----------------------------------------------------------------
 function renderSignals(signals) {
   var grid  = document.getElementById('signals-grid');
   var empty = document.getElementById('empty-state');
@@ -702,15 +702,15 @@ function renderSignals(signals) {
       '<div class="card-title"><a href="' + s.link + '" target="_blank" rel="noopener">' + s.title.replace(/<[^>]+>/g,'') + '</a></div>' +
       '<div class="card-source">' + (s.source || 'News') + '</div>' +
       '<div class="card-actions">' +
-        '<button class="btn-optin" onclick="openModal(' + i + ')">→ Generate opt-in link</button>' +
-        '<a class="btn-read" href="' + s.link + '" target="_blank" rel="noopener">Read →</a>' +
+        '<button class="btn-optin" onclick="openModal(' + i + ')">-> Generate opt-in link</button>' +
+        '<a class="btn-read" href="' + s.link + '" target="_blank" rel="noopener">Read -></a>' +
       '</div></div>';
   }).join('');
   window._renderedSignals = signals;
 }
 
 function typeLabel(t) {
-  return {cloud:'☁️ Cloud', hiring:'👤 Hire', platform:'🔗 Partnership'}[t] || t;
+  return {cloud:'Cloud', hiring:'Hire', platform:'Partnership'}[t] || t;
 }
 
 function setFilter(type, btn) {
@@ -761,7 +761,7 @@ function setStatus(state, text, progress) {
   document.getElementById('status-progress').textContent = progress || '';
 }
 
-// ── MODAL ──────────────────────────────────────────────────────────────────
+// -- MODAL ------------------------------------------------------------------
 function openModal(idx) {
   var s = (window._renderedSignals || [])[idx];
   if (!s) return;
@@ -805,7 +805,7 @@ function updateLink() {
 function copyLink() {
   navigator.clipboard.writeText(document.getElementById('modal-link').textContent).then(function() {
     var btn = document.getElementById('copy-btn');
-    btn.textContent = '✓ Copied!'; btn.className = 'btn-copy copied';
+    btn.textContent = 'Copied!'; btn.className = 'btn-copy copied';
     setTimeout(function(){ btn.textContent = 'Copy link'; btn.className = 'btn-copy'; }, 2000);
   });
 }
@@ -813,7 +813,7 @@ function copyLink() {
 function closeModal() { document.getElementById('modal').classList.remove('active'); }
 function closeModalIfOutside(e) { if (e.target === document.getElementById('modal')) closeModal(); }
 
-// ── VIEW TOGGLE ───────────────────────────────────────────────────────────
+// -- VIEW TOGGLE -----------------------------------------------------------
 var currentView = 'grid';
 
 function setView(view) {
@@ -833,7 +833,7 @@ function setView(view) {
   }
 }
 
-// ── CLAUDE API ENRICHMENT ──────────────────────────────────────────────────
+// -- CLAUDE API ENRICHMENT --------------------------------------------------
 var enrichedCache = {}; // headline -> {company, person_name, person_title}
 var enrichInProgress = false;
 
@@ -903,7 +903,7 @@ function enrichSignals(signals) {
   processBatch();
 }
 
-// ── TABLE RENDER ───────────────────────────────────────────────────────────
+// -- TABLE RENDER -----------------------------------------------------------
 function renderTable(signals) {
   var tbody = document.getElementById('signals-tbody');
   tbody.innerHTML = signals.map(function(s, i) {
@@ -933,14 +933,14 @@ function renderTable(signals) {
         '<span class="badge badge-geo" style="margin-top:4px;display:inline-block">' + s.geo + '</span></td>' +
       '<td class="td-date">' + formatDate(s.dateObj) + '</td>' +
       '<td class="td-actions">' +
-        '<button class="btn-optin" onclick="openModal(' + i + ')" style="display:block;margin-bottom:6px">→ Opt-in link</button>' +
-        '<a class="btn-read" href="' + s.link + '" target="_blank" rel="noopener">Read →</a>' +
+        '<button class="btn-optin" onclick="openModal(' + i + ')" style="display:block;margin-bottom:6px">-> Opt-in link</button>' +
+        '<a class="btn-read" href="' + s.link + '" target="_blank" rel="noopener">Read -></a>' +
       '</td>' +
     '</tr>';
   }).join('');
 }
 
-// ── PATCH applyFilters to also refresh table if in table view ─────────────
+// -- PATCH applyFilters to also refresh table if in table view -------------
 window.addEventListener('DOMContentLoaded', loadAll);
 
 </script>
