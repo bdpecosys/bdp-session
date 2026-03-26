@@ -654,7 +654,7 @@ function loadAll(forceRefresh) {
     updateStats();
     applyFilters();
     if (allSignals.length === 0) {
-      setStatus('loading', '0 signals loaded — proxy blocked or rate-limited', '');
+      setStatus('loading', '0 signals loaded - proxy blocked or rate-limited', '');
       showDebug();
     } else {
       var proxyName = Object.keys(proxyStats)[0] || 'unknown';
@@ -669,10 +669,10 @@ function showDebug() {
   el.innerHTML = '<div style="padding:14px 32px;background:#fff3cd;border-top:2px solid #ffc107;font-size:12px;color:#6d4c00">' +
     '<strong>No signals loaded.</strong> The CORS proxy may be temporarily unavailable or rate-limited.<br><br>' +
     '<strong>Fix options:</strong><br>' +
-    '1. Click <strong>Refresh</strong> — proxies often recover within 30 seconds<br>' +
+    '1. Click <strong>Refresh</strong> - proxies often recover within 30 seconds<br>' +
     '2. Try opening in a different browser or incognito window<br>' +
-    '3. <a href="https://news.google.com/rss/search?q=AWS+migration+Singapore+bank&hl=en-US&gl=US&ceid=US:en" target="_blank" style="color:#0070c0">Test RSS feed directly</a> — if it opens as XML, the proxy is the issue<br>' +
-    '4. Deploy to <strong>session.bdpartners.co/signals</strong> — hosted pages bypass most browser CORS restrictions' +
+    '3. <a href="https://news.google.com/rss/search?q=AWS+migration+Singapore+bank&hl=en-US&gl=US&ceid=US:en" target="_blank" style="color:#0070c0">Test RSS feed directly</a> - if it opens as XML, the proxy is the issue<br>' +
+    '4. Deploy to <strong>session.bdpartners.co/signals</strong> - hosted pages bypass most browser CORS restrictions' +
     '</div>';
   el.style.display = 'block';
 }
@@ -908,7 +908,7 @@ function renderTable(signals) {
   var tbody = document.getElementById('signals-tbody');
   tbody.innerHTML = signals.map(function(s, i) {
     var e = enrichedCache[s.id] || {};
-    var company = e.company || '—';
+    var company = e.company || '-';
     var personName  = e.person_name  || '';
     var personTitle = e.person_title || '';
 
@@ -916,7 +916,7 @@ function renderTable(signals) {
     var contactHtml = enrichedCache[s.id]
       ? (personName
           ? '<div class="td-contact-name">' + personName + '</div><div class="td-contact-title">' + personTitle + '</div>'
-          : '<span style="color:var(--muted)">—</span>')
+          : '<span style="color:var(--muted)">-</span>')
       : '<div class="enriching-dot"></div>';
 
     var companyHtml = enrichedCache[s.id]
@@ -941,9 +941,6 @@ function renderTable(signals) {
 }
 
 // ── PATCH applyFilters to also refresh table if in table view ─────────────
-var _origApplyFilters = applyFilters;
-// Wrap after definition — handled inline below
-
 window.addEventListener('DOMContentLoaded', loadAll);
 
 </script>
