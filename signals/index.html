@@ -877,7 +877,7 @@ function enrichSignals(signals) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
-        system: 'You are a data extraction assistant. For each numbered news headline, extract: the main enterprise company being written about (not AWS/Google/Microsoft themselves, but their customer/partner), and any specific person's name and job title mentioned. Return ONLY a JSON array, one object per headline, in order. Each object: {"company":"...","person_name":"...","person_title":"..."}. Use empty string if not found. No markdown, no explanation.',
+        system: 'You are a data extraction assistant. For each numbered news headline, extract: the main enterprise company being written about (not AWS/Google/Microsoft themselves, but their customer/partner), and any specific person name and job title mentioned. Return ONLY a JSON array, one object per headline, in order. Each object: {"company":"...","person_name":"...","person_title":"..."}. Use empty string if not found. No markdown, no explanation.',
         messages: [{ role: 'user', content: headlines }]
       })
     })
