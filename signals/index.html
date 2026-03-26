@@ -82,6 +82,16 @@ html,body{min-height:100vh;font-family:"DM Sans",sans-serif;background:var(--cre
 .btn-cancel{padding:9px 18px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer}
 .footer{padding:14px 32px;border-top:1px solid var(--border);background:var(--white);display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:32px;flex-wrap:wrap;gap:8px}
 @media(max-width:600px){.header,.controls,.stats,.main,.status-bar{padding-left:16px;padding-right:16px}.grid{grid-template-columns:1fr}}
+
+.view-toggle{display:flex;align-items:center;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px;margin-left:8px}
+.vbtn{padding:4px 10px;border-radius:4px;border:none;background:transparent;cursor:pointer;font-size:12px;color:var(--muted);font-family:"DM Sans",sans-serif}
+.vbtn.active{background:var(--white);color:var(--text);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tbl{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.tbl thead th{background:var(--navy);color:var(--white);padding:10px 14px;text-align:left;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.tbl tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+.tbl tbody tr:last-child{border-bottom:none}
+.tbl tbody tr:hover{background:var(--surface)}
+.tbl td{padding:10px 14px;vertical-align:top;line-height:1.4;font-size:13px}
 </style>
 </head>
 <body>
@@ -107,7 +117,7 @@ html,body{min-height:100vh;font-family:"DM Sans",sans-serif;background:var(--cre
   <button class="fbtn" data-geo="UAE" onclick="filterGeo('UAE',this)">UAE</button>
   <button class="fbtn" data-geo="APAC" onclick="filterGeo('APAC',this)">APAC</button>
   <button class="fbtn" data-geo="EU" onclick="filterGeo('EU',this)">EU</button>
-  <input class="search ml" type="text" placeholder="Search..." oninput="render()" id="q">
+  <div class="view-toggle ml"><button class="vbtn active" id="v-grid" onclick="setView('grid')">Cards</button><button class="vbtn" id="v-table" onclick="setView('table')">Table</button></div><input class="search" type="text" placeholder="Search..." oninput="render()" id="q">
   <button class="refresh-btn" id="rbtn" onclick="load(true)">Refresh</button>
 </div>
 <div class="stats">
@@ -117,9 +127,13 @@ html,body{min-height:100vh;font-family:"DM Sans",sans-serif;background:var(--cre
   <div class="stat"><div class="stat-n" id="s-platform" style="color:var(--amber)">-</div><div class="stat-l">Partnerships</div></div>
   <div class="stat"><div class="stat-n" id="s-showing">-</div><div class="stat-l">Showing</div></div>
 </div>
+<div id="enrich-bar" style="display:none;padding:8px 32px;background:rgba(201,168,76,.1);border-bottom:1px solid rgba(201,168,76,.25);font-size:12px;color:#d97706;align-items:center;gap:10px">
+  <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#c9a84c;animation:pulse 1s infinite"></span>
+  <span id="enrich-text">Extracting company and contact data via AI...</span>
+</div>
 <main class="main">
   <div id="loading" class="grid"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
-  <div id="results" style="display:none"><div class="grid" id="grid"></div></div>
+  <div id="results" style="display:none"><div class="grid" id="grid"></div><div id="tbl-wrap" style="display:none;overflow-x:auto"><table class="tbl"><thead><tr><th>Signal</th><th>Company</th><th>Contact</th><th>Type</th><th>Date</th><th>Action</th></tr></thead><tbody id="tbody"></tbody></table></div></div>
   <div id="empty" class="empty" style="display:none">No signals match your filters.</div>
 </main>
 <div class="modal-bg" id="modal" onclick="bgClick(event)">
