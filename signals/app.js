@@ -1,9 +1,9 @@
 // BDP Signal Intelligence - app.js
 var BASE = 'https://session.bdpartners.co';
-var CACHE_KEY = 'bdp_v4';
+var CACHE_KEY = 'bdp_v5';
 var CACHE_TTL = 30 * 60 * 1000;
 
-var QUERIES = [{"id": "cloud_adopt_me", "label": "Cloud Adoption \u00b7 Middle East", "type": "cloud", "geo": "UAE", "q": "\"migrates to AWS\" OR \"moves to Google Cloud\" OR \"selects AWS\" OR \"cloud transformation\" OR \"signs agreement with AWS\" bank OR insurance OR fintech UAE OR Dubai OR \"Abu Dhabi\" -drone -attack -outage -strike -war"}, {"id": "cloud_adopt_il", "label": "Cloud Adoption \u00b7 Israel", "type": "cloud", "geo": "Israel", "q": "\"migrates to\" OR \"selects\" OR \"cloud transformation\" OR \"digital transformation\" AWS OR \"Google Cloud\" OR Azure bank OR insurance OR retail Israel -drone -attack -war -military -IDF"}, {"id": "cloud_adopt_sg", "label": "Cloud Adoption \u00b7 Singapore", "type": "cloud", "geo": "APAC", "q": "\"migrates to AWS\" OR \"moves to Google Cloud\" OR \"selects Azure\" OR \"cloud migration\" bank OR insurance OR fintech Singapore -outage"}, {"id": "cloud_adopt_in", "label": "Cloud Adoption \u00b7 India", "type": "cloud", "geo": "APAC", "q": "\"migrates to AWS\" OR \"moves to Google Cloud\" OR \"cloud transformation\" bank OR insurance OR fintech India 2025 OR 2026 -outage -breach"}, {"id": "cloud_adopt_uk", "label": "Cloud Adoption \u00b7 UK", "type": "cloud", "geo": "EU", "q": "\"migrates to AWS\" OR \"selects Google Cloud\" OR \"moves to Azure\" OR \"cloud transformation\" bank OR insurance OR retail \"United Kingdom\" OR \"UK\" -breach -outage 2025 OR 2026"}, {"id": "cloud_adopt_de", "label": "Cloud Adoption \u00b7 Germany", "type": "cloud", "geo": "EU", "q": "\"migrates to\" OR \"selects\" OR \"cloud transformation\" AWS OR \"Google Cloud\" OR Azure bank OR insurance OR retail Germany 2025 OR 2026 -breach -outage"}, {"id": "hire_cdo_me", "label": "CDO / CIO Hire \u00b7 Middle East", "type": "hiring", "geo": "UAE", "q": "appointed OR named \"Chief Digital Officer\" OR \"Chief Information Officer\" OR \"Head of Innovation\" OR \"VP Technology\" UAE OR Dubai OR \"Abu Dhabi\" bank OR insurance OR fintech 2025 OR 2026"}, {"id": "hire_partnerships_me", "label": "VP Partnerships Hire \u00b7 Middle East", "type": "hiring", "geo": "UAE", "q": "appointed OR named OR joins \"VP Partnerships\" OR \"Head of Business Development\" OR \"Chief Partnerships Officer\" UAE OR Israel OR Dubai bank OR fintech OR insurance 2025 OR 2026"}, {"id": "hire_cdo_apac", "label": "CDO / CIO Hire \u00b7 APAC", "type": "hiring", "geo": "APAC", "q": "appointed OR named \"Chief Digital Officer\" OR \"Chief Information Officer\" OR \"Head of Innovation\" Singapore OR India bank OR insurance OR fintech 2025 OR 2026"}, {"id": "hire_cdo_eu", "label": "CDO / CIO Hire \u00b7 UK & Germany", "type": "hiring", "geo": "EU", "q": "appointed OR named \"Chief Digital Officer\" OR \"Chief Information Officer\" OR \"Head of Innovation\" \"United Kingdom\" OR Germany bank OR insurance OR retail 2025 OR 2026"}, {"id": "platform_listing_il", "label": "Marketplace Listing \u00b7 Israel", "type": "platform", "geo": "Israel", "q": "\"listed on AWS Marketplace\" OR \"AWS ISV\" OR \"joins Google Cloud\" OR \"AppExchange\" Israeli OR Israel startup 2025 OR 2026"}, {"id": "cloud_partner_me", "label": "Cloud Partnership \u00b7 Middle East", "type": "cloud", "geo": "UAE", "q": "\"strategic partnership\" OR \"signs deal\" OR \"agreement\" AWS OR \"Google Cloud\" OR Microsoft UAE OR Dubai OR \"Saudi Arabia\" enterprise OR bank OR telecom 2025 OR 2026 -drone -attack"}];
+var QUERIES = [{"id": "cloud_il", "label": "Cloud \u00b7 Israel", "type": "cloud", "geo": "IL", "q": "cloud transformation Israel bank OR insurance OR retail 2025 OR 2026 -drone -attack -war"}, {"id": "cloud_uae", "label": "Cloud \u00b7 UAE", "type": "cloud", "geo": "UAE", "q": "cloud transformation UAE OR Dubai bank OR insurance OR fintech 2025 OR 2026 -drone -attack -strike"}, {"id": "cloud_sg", "label": "Cloud \u00b7 Singapore", "type": "cloud", "geo": "APAC", "q": "cloud migration Singapore bank OR insurance OR fintech 2025 OR 2026"}, {"id": "cloud_in", "label": "Cloud \u00b7 India", "type": "cloud", "geo": "APAC", "q": "cloud transformation India bank OR insurance OR fintech 2025 OR 2026"}, {"id": "cloud_uk", "label": "Cloud \u00b7 UK", "type": "cloud", "geo": "EU", "q": "cloud migration UK bank OR insurance OR retail 2025 OR 2026"}, {"id": "cloud_de", "label": "Cloud \u00b7 Germany", "type": "cloud", "geo": "EU", "q": "cloud transformation Germany bank OR insurance OR retail 2025 OR 2026"}, {"id": "hire_me", "label": "Hire \u00b7 Middle East", "type": "hiring", "geo": "UAE", "q": "appointed OR named \"Chief Digital Officer\" OR \"Chief Information Officer\" OR \"Head of Innovation\" OR \"VP Technology\" UAE OR Dubai OR \"Abu Dhabi\" bank OR insurance OR fintech after:2025-01-01"}, {"id": "hire_me2", "label": "Hire Partnerships \u00b7 ME", "type": "hiring", "geo": "UAE", "q": "appointed OR named OR joins \"VP Partnerships\" OR \"Head of Business Development\" OR \"Chief Partnerships\" UAE OR Israel OR Dubai bank OR fintech OR insurance after:2025-01-01"}, {"id": "hire_apac", "label": "Hire \u00b7 APAC", "type": "hiring", "geo": "APAC", "q": "appointed OR named \"Chief Digital Officer\" OR \"Chief Information Officer\" OR \"Head of Innovation\" Singapore OR India bank OR insurance OR fintech after:2025-01-01"}, {"id": "hire_eu", "label": "Hire \u00b7 EU", "type": "hiring", "geo": "EU", "q": "appointed OR named \"Chief Digital Officer\" OR \"Chief Information Officer\" OR \"Head of Innovation\" \"United Kingdom\" OR Germany bank OR insurance OR retail after:2025-01-01"}, {"id": "platform_il", "label": "Platform \u00b7 Israel", "type": "platform", "geo": "IL", "q": "\"listed on AWS Marketplace\" OR \"AWS ISV\" OR \"joins Google Cloud\" OR \"AppExchange\" Israeli OR Israel startup 2025 OR 2026"}];
 
 var PROXIES = [
   function(u){ return 'https://corsproxy.io/?' + encodeURIComponent(u); },
@@ -14,6 +14,7 @@ var PROXIES = [
 var all = [];
 var typeFilter = 'all';
 var geoFilter = null;
+var currentView = 'grid';
 var modalIdx = -1;
 var oppN = 1;
 
@@ -27,8 +28,7 @@ function fetchProxy(url) {
     if (i >= PROXIES.length) return Promise.resolve('');
     var purl = PROXIES[i++](url);
     return fetch(purl).then(function(r) {
-      if (!r.ok) throw new Error('bad status');
-      // allorigins /get returns JSON wrapper
+      if (!r.ok) throw new Error('bad');
       if (purl.indexOf('/get?url=') !== -1) {
         return r.json().then(function(d) { return d.contents || ''; });
       }
@@ -52,7 +52,7 @@ function parseRss(xml, query) {
     var d = pub ? new Date(pub) : new Date(0);
     return { title:title, link:link, source:src, type:query.type, geo:query.geo, d:d, signal:title.slice(0,120) };
   }).filter(function(s) {
-    return s.title.length > 10 && (!s.d || isNaN(s.d) || s.d.getTime() > cutoff);
+    return s.title.length > 10 && s.d.getTime() > cutoff;
   });
 }
 
@@ -60,9 +60,7 @@ function dedupe(arr) {
   var seen = {};
   return arr.filter(function(s) {
     var k = s.title.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,50);
-    if (seen[k]) return false;
-    seen[k] = true;
-    return true;
+    if (seen[k]) return false; seen[k] = true; return true;
   });
 }
 
@@ -76,8 +74,7 @@ function ago(d) {
 }
 
 function setStatus(state, text, prog) {
-  var dot = document.getElementById('dot');
-  dot.className = 'dot ' + state;
+  document.getElementById('dot').className = 'dot ' + state;
   document.getElementById('status').textContent = text;
   document.getElementById('progress').textContent = prog || '';
 }
@@ -89,7 +86,7 @@ function updateStats() {
   document.getElementById('s-platform').textContent = all.filter(function(s){ return s.type==='platform'; }).length;
 }
 
-function filtered() {
+function getFiltered() {
   var q = document.getElementById('q').value.toLowerCase();
   return all.filter(function(s) {
     if (typeFilter !== 'all' && s.type !== typeFilter) return false;
@@ -100,16 +97,17 @@ function filtered() {
 }
 
 function typeBadge(t) {
-  var map = {cloud:'b-cloud',hiring:'b-hiring',platform:'b-platform'};
-  var label = {cloud:'Cloud',hiring:'Hire',platform:'Partnership'};
-  return '<span class="badge ' + (map[t]||'') + '">' + (label[t]||t) + '</span>';
+  var cls = {cloud:'b-cloud',hiring:'b-hiring',platform:'b-platform'};
+  var lbl = {cloud:'Cloud',hiring:'Hire',platform:'Partnership'};
+  return '<span class="badge ' + (cls[t]||'') + '">' + (lbl[t]||t) + '</span>';
 }
 
 function render() {
-  var data = filtered();
+  var data = getFiltered();
+  window._data = data;
   document.getElementById('s-showing').textContent = data.length;
   document.getElementById('fcount').textContent = data.length + ' signals shown';
-  var grid = document.getElementById('grid');
+
   if (data.length === 0) {
     document.getElementById('results').style.display = 'none';
     document.getElementById('empty').style.display = 'block';
@@ -118,25 +116,144 @@ function render() {
   document.getElementById('empty').style.display = 'none';
   document.getElementById('results').style.display = 'block';
 
-  // Store for modal
-  window._data = data;
+  if (currentView === 'grid') {
+    renderGrid(data);
+  } else {
+    renderTable(data);
+  }
+}
 
-  grid.innerHTML = data.map(function(s, i) {
+function renderGrid(data) {
+  document.getElementById('grid').style.display = 'grid';
+  document.getElementById('tbl-wrap').style.display = 'none';
+  document.getElementById('grid').innerHTML = data.map(function(s, i) {
     return '<div class="card" style="animation-delay:' + Math.min(i*25,250) + 'ms">' +
-      '<div class="card-top">' +
-        '<div class="badges">' + typeBadge(s.type) + '<span class="badge b-geo">' + s.geo + '</span></div>' +
-        '<div class="card-date">' + ago(s.d) + '</div>' +
-      '</div>' +
+      '<div class="card-top"><div class="badges">' + typeBadge(s.type) +
+      '<span class="badge b-geo">' + s.geo + '</span></div>' +
+      '<div class="card-date">' + ago(s.d) + '</div></div>' +
       '<div class="card-title"><a href="' + s.link + '" target="_blank" rel="noopener">' +
-        s.title.replace(/<[^>]+>/g,'') +
-      '</a></div>' +
+        s.title.replace(/<[^>]+>/g,'') + '</a></div>' +
       '<div class="card-source">' + (s.source||'') + '</div>' +
       '<div class="card-actions">' +
         '<button class="btn-action" onclick="openModal(' + i + ')">Generate opt-in link</button>' +
         '<a class="btn-read" href="' + s.link + '" target="_blank" rel="noopener">Read</a>' +
-      '</div>' +
-    '</div>';
+      '</div></div>';
   }).join('');
+}
+
+// Enrichment cache: signal id -> {company, person_name, person_title}
+var enrichCache = {};
+var enrichBusy = false;
+
+function signalId(s) {
+  return (s.title || '').slice(0, 40).replace(/[^a-z0-9]/gi, '');
+}
+
+function enrichAndRender(data) {
+  // Show table immediately with spinners for unenriched rows
+  renderTableRaw(data);
+
+  var toEnrich = data.filter(function(s) { return !enrichCache[signalId(s)]; });
+  if (toEnrich.length === 0 || enrichBusy) return;
+
+  enrichBusy = true;
+  var bar = document.getElementById('enrich-bar');
+  bar.style.display = 'flex';
+
+  var batchSize = 8;
+  var batches = [];
+  for (var i = 0; i < toEnrich.length; i += batchSize) {
+    batches.push(toEnrich.slice(i, i + batchSize));
+  }
+
+  var bIdx = 0;
+  function nextBatch() {
+    if (bIdx >= batches.length) {
+      enrichBusy = false;
+      bar.style.display = 'none';
+      renderTableRaw(data);
+      return;
+    }
+    var batch = batches[bIdx++];
+    document.getElementById('enrich-text').textContent =
+      'Extracting contacts... batch ' + bIdx + ' of ' + batches.length;
+
+    var headlines = batch.map(function(s, i) {
+      return (i + 1) + '. ' + s.title.replace(/<[^>]+>/g, '');
+    }).join('\n');
+
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 800,
+        system: 'Extract data from news headlines. For each numbered headline return a JSON array with one object per headline containing: company (the enterprise customer or partner being written about, NOT AWS/Google/Microsoft/Oracle themselves), person_name (full name of any executive mentioned), person_title (their job title). Use empty string if not found. Return ONLY the raw JSON array, no markdown, no explanation.',
+        messages: [{ role: 'user', content: headlines }]
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var text = ((data.content || [])[0] || {}).text || '[]';
+      text = text.replace(/```[a-z]*/g, '').replace(/```/g, '').trim();
+      var results = JSON.parse(text);
+      batch.forEach(function(s, i) {
+        enrichCache[signalId(s)] = results[i] || { company: '', person_name: '', person_title: '' };
+      });
+      nextBatch();
+    })
+    .catch(function() {
+      batch.forEach(function(s) {
+        enrichCache[signalId(s)] = { company: '', person_name: '', person_title: '' };
+      });
+      nextBatch();
+    });
+  }
+  nextBatch();
+}
+
+function spinner() {
+  return '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#c9a84c;animation:pulse 1s infinite"></span>';
+}
+
+function renderTableRaw(data) {
+  document.getElementById('grid').style.display = 'none';
+  document.getElementById('tbl-wrap').style.display = 'block';
+  document.getElementById('tbody').innerHTML = data.map(function(s, i) {
+    var e = enrichCache[signalId(s)];
+    var company = e ? (e.company || '-') : spinner();
+    var contact = e
+      ? (e.person_name ? '<b>' + e.person_name + '</b><br><span style="font-size:11px;color:#6b7280">' + (e.person_title || '') + '</span>' : '-')
+      : spinner();
+
+    return '<tr>' +
+      '<td style="max-width:280px"><div style="font-weight:500;line-height:1.35">' +
+        '<a href="' + s.link + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">' +
+        s.title.replace(/<[^>]+>/g, '').slice(0, 90) +
+        (s.title.length > 90 ? '...' : '') + '</a></div>' +
+        '<div style="font-size:11px;color:#6b7280;margin-top:2px">' + (s.source || '') + '</div>' +
+      '</td>' +
+      '<td style="font-weight:600;color:#0f1f38;min-width:120px">' + company + '</td>' +
+      '<td style="min-width:150px">' + contact + '</td>' +
+      '<td>' + typeBadge(s.type) + '<br><span class="badge b-geo" style="margin-top:4px;display:inline-block">' + s.geo + '</span></td>' +
+      '<td style="font-size:12px;color:#6b7280;white-space:nowrap">' + ago(s.d) + '</td>' +
+      '<td style="white-space:nowrap">' +
+        '<button class="btn-action" style="font-size:11px;padding:4px 10px;display:block;margin-bottom:4px" onclick="openModal(' + i + ')">Opt-in link</button>' +
+        '<a class="btn-read" style="font-size:11px;padding:4px 10px" href="' + s.link + '" target="_blank">Read</a>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function renderTable(data) {
+  enrichAndRender(data);
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('v-grid').className = 'vbtn' + (v==='grid' ? ' active' : '');
+  document.getElementById('v-table').className = 'vbtn' + (v==='table' ? ' active' : '');
+  render();
 }
 
 function load(force) {
@@ -148,12 +265,11 @@ function load(force) {
         document.getElementById('loading').style.display = 'none';
         updateStats(); render();
         setStatus('done', 'Cached: ' + new Date(c.ts).toLocaleTimeString(), '');
-        document.getElementById('last-updated').textContent = 'Cached: ' + new Date(c.ts).toLocaleTimeString();
+        document.getElementById('last-updated').textContent = 'Updated: ' + new Date(c.ts).toLocaleTimeString();
         return;
       }
     } catch(e) {}
   }
-
   all = [];
   document.getElementById('rbtn').disabled = true;
   document.getElementById('loading').style.display = 'grid';
@@ -163,7 +279,6 @@ function load(force) {
 
   var done = 0;
   var parser = new DOMParser();
-
   Promise.all(QUERIES.map(function(q) {
     return fetchProxy(rssUrl(q.q)).then(function(text) {
       if (text) {
@@ -181,19 +296,14 @@ function load(force) {
     document.getElementById('rbtn').disabled = false;
     document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
     updateStats(); render();
-    if (all.length === 0) {
-      setStatus('loading', '0 signals - proxy may be blocked, try Refresh', '');
-    } else {
-      setStatus('done', 'Live: ' + all.length + ' signals loaded', '');
-    }
+    setStatus('done', 'Live: ' + all.length + ' signals', '');
   });
 }
 
 function filterType(t, btn) {
   typeFilter = t;
   document.querySelectorAll('[data-type]').forEach(function(b) { b.classList.remove('active'); });
-  btn.classList.add('active');
-  render();
+  btn.classList.add('active'); render();
 }
 
 function filterGeo(g, btn) {
