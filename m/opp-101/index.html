@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDP Ecosystems - TikTok &amp; Metriko.ai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #2d3e50;
+    --navy-deep: #1a2a3a;
+    --blue-1: #1a6aaa;
+    --blue-2: #2080c0;
+    --blue-3: #3a9bd5;
+    --teal: #00b4a0;
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --text: #1e2a3a;
+    --muted: #6b7a8d;
+    --border: #e2e8f0;
+    --accent: #1a6aaa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+  }
+
+  .header-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .header-logo { height: 40px; }
+
+  .main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 24px 48px;
+  }
+
+  .title-section {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .opp-ref {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .page-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 30px;
+    line-height: 1.25;
+    color: var(--navy-deep);
+    margin-bottom: 10px;
+  }
+
+  .page-sub {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+
+  .participants {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .participant {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 24px 20px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+
+  .connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+  }
+
+  .connector-hex {
+    width: 40px;
+    height: 40px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(45deg);
+  }
+
+  .connector-hex span {
+    transform: rotate(-45deg);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .p-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: white;
+    margin: 0 auto 12px;
+  }
+
+  .p-avatar.a1 { background: #1a1a2e; }
+  .p-avatar.a2 { background: var(--blue-2); }
+
+  .p-name {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 3px;
+    color: var(--navy-deep);
+  }
+
+  .p-title {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.4;
+    margin-bottom: 2px;
+  }
+
+  .p-company {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  @media (max-width: 580px) {
+    .participants {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .connector {
+      transform: rotate(90deg);
+      padding: 4px 0;
+    }
+    .page-title { font-size: 25px; }
+    .context, .schedule-section { padding: 20px; }
+  }
+
+  .context {
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 28px;
+    margin-bottom: 28px;
+  }
+
+  .context-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+
+  .context p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .context p:last-child { margin-bottom: 0; }
+  .context strong { color: var(--navy-deep); }
+
+  .meeting-info {
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 20px 28px;
+    margin-bottom: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .info-item {
+    flex: 1;
+    min-width: 140px;
+    padding: 8px 0;
+    text-align: center;
+  }
+
+  .info-item + .info-item { border-left: 1px solid var(--border); }
+
+  @media (max-width: 580px) {
+    .meeting-info { flex-direction: column; }
+    .info-item + .info-item { border-left: none; border-top: 1px solid var(--border); }
+  }
+
+  .info-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+  }
+
+  .info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy-deep);
+  }
+
+  .schedule-section {
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 28px;
+    margin-bottom: 28px;
+  }
+
+  .schedule-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .schedule-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--navy-deep);
+    margin-bottom: 6px;
+  }
+
+  .schedule-sub {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .cal-frame {
+    border: none;
+    width: 100%;
+    min-height: 580px;
+    border-radius: 8px;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 24px 24px 40px;
+  }
+
+  .footer-logo {
+    height: 28px;
+    margin-bottom: 10px;
+    opacity: 0.5;
+  }
+
+  .footer-text {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .footer-text a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <img src="/logo.jpg" alt="BDP Ecosystems" class="header-logo">
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="title-section">
+    <h1 class="page-title">TikTok &amp; Metriko.ai</h1>
+  </div>
+
+  <div class="participants">
+    <div class="participant">
+      <div class="p-avatar a1">DB</div>
+      <div class="p-name">Daniel Biran</div>
+      <div class="p-title">Head of Commerce &amp; Ecosystem</div>
+      <div class="p-company">TikTok</div>
+    </div>
+    <div class="connector">
+      <div class="connector-hex"><span>x</span></div>
+    </div>
+    <div class="participant">
+      <div class="p-avatar a2">AB</div>
+      <div class="p-name">Achishay Buchnick</div>
+      <div class="p-title">CEO</div>
+      <div class="p-company">Metriko.ai</div>
+    </div>
+  </div>
+
+  <div class="context">
+    <div class="context-label">Meeting Context</div>
+    <p>
+      <strong>TikTok</strong> is expanding its commercial activity and enterprise
+      offering in Israel, building out its ecosystem of technology partners that help
+      brands and retailers maximize their presence on the platform.
+    </p>
+    <p>
+      <strong>Metriko.ai</strong> is a retail integration platform that connects ERP, CRM,
+      and e-commerce systems through a centralized data hub. Metriko is actively growing
+      its platform integrations and client base in Israel and internationally.
+    </p>
+    <p>
+      <strong>The opportunity:</strong> Metriko's retail technology integration capabilities
+      could help TikTok's enterprise clients streamline their commerce operations, while
+      TikTok's platform reach could open new channels for Metriko's retail partners.
+    </p>
+  </div>
+
+  <div class="meeting-info">
+    <div class="info-item">
+      <div class="info-label">Format</div>
+      <div class="info-value">Video Call</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Duration</div>
+      <div class="info-value">30 Minutes</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Facilitated By</div>
+      <div class="info-value">Amos Avner, BDP</div>
+    </div>
+  </div>
+
+  <div class="schedule-section">
+    <div class="schedule-header">
+      <div class="schedule-title">Pick a Time</div>
+      <div class="schedule-sub">Select an available slot that works for you</div>
+    </div>
+    <iframe
+      class="cal-frame"
+      src="https://cal.com/bdpecosys/bdp-intro-meeting?layout=month_view&theme=light"
+      title="Schedule meeting"
+      loading="lazy"
+    ></iframe>
+  </div>
+
+</div>
+
+<div class="footer">
+  <img src="/logo.jpg" alt="BDP Ecosystems" class="footer-logo"><br>
+  <div class="footer-text">
+    <a href="/cdn-cgi/l/email-protection#01606c6e72416365716073756f6473722f626e"><span class="__cf_email__" data-cfemail="e1808c8e92a18385918093958f849392cf828e">[email&#160;protected]
