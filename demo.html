@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDP Signal Intelligence — Platform Demo</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#0a1628}
+.deck{position:fixed;inset:0;display:flex;flex-direction:column}
+
+/* Top bar */
+.topbar{background:#0f1f38;height:50px;display:flex;align-items:center;padding:0 1.5rem;gap:1.25rem;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0}
+.logo{font-size:.95rem;font-weight:700;color:white;white-space:nowrap;letter-spacing:.3px}
+.logo span{color:#7ec8e3}
+.ctabs{display:flex;gap:.2rem;flex:1}
+.ctab{padding:.28rem .7rem;border-radius:20px;font-size:.75rem;font-weight:500;color:rgba(255,255,255,.45);cursor:pointer;border:1px solid transparent;background:none;transition:all .2s}
+.ctab.active{background:rgba(255,255,255,.12);color:white;border-color:rgba(255,255,255,.18)}
+.counter{font-size:.75rem;color:rgba(255,255,255,.4);white-space:nowrap}
+.playbtn{background:#0070c0;color:white;border:none;padding:.3rem .85rem;border-radius:20px;font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s}
+.playbtn:hover{background:#005a9e}
+.playbtn.playing{background:#dc3545}
+
+/* Timer bar */
+.timerbar{height:3px;background:rgba(255,255,255,.07);flex-shrink:0;position:relative}
+.timerfill{height:100%;background:#0070c0;width:0%;transition:width .3s linear}
+
+/* Stage */
+.stage{flex:1;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;display:grid;grid-template-columns:320px 1fr;opacity:0;transform:translateX(24px);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:all}
+.slide.cover,.slide.summary{grid-template-columns:1fr}
+
+/* Text panel */
+.sp{background:#0f1f38;color:white;padding:1.75rem 1.5rem;display:flex;flex-direction:column;gap:.9rem;border-right:1px solid rgba(255,255,255,.08);overflow-y:auto}
+.sp-chapter{font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#7ec8e3}
+.sp-step{font-size:.68rem;color:rgba(255,255,255,.35)}
+.sp-title{font-size:1.35rem;font-weight:700;line-height:1.25;color:white}
+.sp-desc{font-size:.84rem;color:rgba(255,255,255,.68);line-height:1.6}
+.sp-bullets{list-style:none;display:flex;flex-direction:column;gap:.45rem}
+.sp-bullets li{font-size:.82rem;color:rgba(255,255,255,.72);padding-left:1.1rem;position:relative;line-height:1.4}
+.sp-bullets li::before{content:'→';position:absolute;left:0;color:#7ec8e3;font-weight:700}
+.sp-hl{background:rgba(0,112,192,.18);border:1px solid rgba(0,112,192,.35);border-radius:7px;padding:.65rem .85rem;font-size:.8rem;color:rgba(255,255,255,.82);line-height:1.5}
+.sp-hl strong{color:#7ec8e3}
+
+/* Mockup panel */
+.mp{background:#152035;display:flex;align-items:center;justify-content:center;padding:1.25rem;overflow:hidden}
+.browser{background:white;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden;width:100%;max-width:700px;display:flex;flex-direction:column;max-height:calc(100vh - 116px)}
+.bbar{background:#f1f3f4;padding:.42rem .65rem;display:flex;align-items:center;gap:.45rem;border-bottom:1px solid #e0e0e0;flex-shrink:0}
+.bdots{display:flex;gap:.28rem}
+.bdots span{width:9px;height:9px;border-radius:50%}
+.bdots span:nth-child(1){background:#ff5f57}
+.bdots span:nth-child(2){background:#ffbd2e}
+.bdots span:nth-child(3){background:#28c840}
+.burl{flex:1;background:white;border:1px solid #ddd;border-radius:4px;padding:.17rem .5rem;font-size:.68rem;color:#555;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bcontent{overflow:hidden;flex:1;font-size:12px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
+
+/* Bottom nav */
+.bottomnav{background:#0f1f38;border-top:1px solid rgba(255,255,255,.08);height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;flex-shrink:0}
+.navbtn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:white;padding:.32rem .9rem;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:500;transition:background .15s}
+.navbtn:hover{background:rgba(255,255,255,.15)}
+.navbtn:disabled{opacity:.28;cursor:not-allowed}
+.dots{display:flex;gap:.38rem}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:all .2s;border:none}
+.dot.active{background:#0070c0;transform:scale(1.3)}
+
+/* ---- Mock UI variables ---- */
+:root{
+  --n:#0f1f38;--b:#0070c0;--bl:#e8f4fd;--cr:#f7f4ef;
+  --g:#155724;--gb:#d4edda;--y:#856404;--yb:#fff3cd;
+  --gr:#6c757d;--br:#dee2e6;
+}
+
+/* Mock app shell */
+.m-app{background:var(--cr);height:100%}
+.m-hdr{background:var(--n);color:white;padding:0 .9rem;height:34px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.m-hdr-logo{font-size:.78rem;font-weight:700}
+.m-hdr-logo span{color:#7ec8e3}
+.m-hdr-nav{display:flex;gap:.9rem}
+.m-hdr-nav a{color:rgba(255,255,255,.65);font-size:.66rem;text-decoration:none}
+.m-hdr-nav a.on{color:white;font-weight:600}
+.m-body{padding:.7rem .85rem;overflow:hidden}
+.m-ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem}
+.m-h1{font-size:.95rem;font-weight:700;color:var(--n)}
+.m-sub{font-size:.62rem;color:var(--gr)}
+.m-btn{padding:.25rem .55rem;border-radius:5px;font-size:.65rem;font-weight:600;border:none;cursor:default;display:inline-block}
+.m-btn-p{background:var(--b);color:white}
+.m-btn-s{background:white;color:var(--n);border:1px solid var(--br)}
+.m-btn-sm{padding:.18rem .42rem;font-size:.6rem}
+.m-stats{display:flex;gap:.4rem;margin-bottom:.55rem}
+.m-stat{background:white;border-radius:6px;padding:.38rem .55rem;box-shadow:0 1px 3px rgba(0,0,0,.07);flex:1}
+.m-sv{font-size:1.1rem;font-weight:700;color:var(--n)}
+.m-sl{font-size:.58rem;color:var(--gr)}
+.m-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-bottom:.5rem}
+.m-co{background:white;border-radius:6px;padding:.6rem;box-shadow:0 1px 3px rgba(0,0,0,.07);border:2px solid transparent}
+.m-co.hl{border-color:var(--b)}
+.m-co-name{font-size:.78rem;font-weight:700;color:var(--n);margin-bottom:.1rem}
+.m-co-dom{font-size:.6rem;color:var(--gr);margin-bottom:.4rem}
+.m-co-meta{display:flex;gap:.35rem;font-size:.58rem;color:var(--gr);flex-wrap:wrap}
+.m-card{background:white;border-radius:6px;padding:.6rem;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:.45rem}
+.m-badge{display:inline-block;padding:.12rem .38rem;border-radius:4px;font-size:.58rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+.m-ba{background:var(--gb);color:var(--g)}
+.m-bb{background:var(--bl);color:#004a80}
+.m-bh{background:var(--gb);color:var(--g)}
+.m-bm{background:var(--yb);color:var(--y)}
+.m-bl{background:#f8f9fa;color:var(--gr)}
+.m-bd{background:var(--gb);color:var(--g)}
+.m-icp-grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.45rem}
+.m-icp{background:white;border-radius:6px;padding:.55rem;border-left:3px solid var(--b);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.m-icp-name{font-weight:700;font-size:.72rem;color:var(--n);margin-bottom:.3rem}
+.m-row{display:flex;gap:.2rem;margin-bottom:.18rem}
+.m-lbl{font-size:.56rem;color:var(--gr);text-transform:uppercase;min-width:60px;padding-top:.05rem}
+.m-val{font-size:.65rem;color:#333}
+.m-sig{background:white;border-radius:6px;padding:.55rem;border-left:3px solid #198754;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:.4rem}
+.m-sig-name{font-weight:700;font-size:.73rem;color:var(--n);margin-bottom:.25rem}
+.m-sig-desc{font-size:.63rem;color:#444;line-height:1.4;margin-bottom:.28rem}
+.m-queries{display:flex;flex-wrap:wrap;gap:.2rem}
+.m-qtag{background:var(--bl);color:var(--b);border-radius:4px;padding:.1rem .32rem;font-size:.58rem}
+.m-table{width:100%;border-collapse:collapse;font-size:.65rem}
+.m-table th{background:var(--n);color:white;padding:.32rem .42rem;text-align:left;font-weight:500;font-size:.6rem}
+.m-table td{padding:.32rem .42rem;border-bottom:1px solid var(--br);vertical-align:top}
+.m-table tr.hl td{background:#fff8e1}
+.m-table tr.hlg td{background:#f0fff4}
+.m-alert{background:var(--bl);color:#004a80;border:1px solid #b8daff;border-radius:5px;padding:.4rem .6rem;font-size:.67rem;display:flex;align-items:center;gap:.35rem;margin-bottom:.45rem}
+.m-spin{width:11px;height:11px;border-radius:50%;border:2px solid #b8daff;border-top-color:var(--b);animation:sp .6s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+.m-conn{display:inline-flex;align-items:center;gap:.15rem;background:var(--gb);color:var(--g);border-radius:10px;padding:.08rem .32rem;font-size:.58rem;font-weight:700}
+.m-tag{display:inline-block;background:var(--bl);color:var(--b);border-radius:4px;padding:.1rem .3rem;font-size:.6rem;font-weight:500;margin-bottom:.12rem}
+.m-actionbar{background:white;border-radius:6px;padding:.4rem .6rem;display:flex;align-items:center;gap:.4rem;margin-bottom:.45rem;box-shadow:0 1px 3px rgba(0,0,0,.06);font-size:.64rem}
+.m-ftr{background:var(--n);color:rgba(255,255,255,.5);text-align:center;font-size:.58rem;padding:.28rem}
+.m-tabs{display:flex;border-bottom:2px solid var(--br);margin-bottom:.5rem}
+.m-tab{padding:.3rem .6rem;font-size:.67rem;color:var(--gr);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:default}
+.m-tab.on{color:var(--b);border-bottom-color:var(--b);font-weight:600}
+.m-strong{font-weight:700;color:var(--n)}
+.m-chk{display:flex;align-items:center;gap:.4rem;margin-bottom:.35rem}
+.m-chk input{width:13px;height:13px;accent-color:var(--b)}
+.m-chk-txt{font-size:.7rem;color:#333}
+.m-scope{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.5rem}
+.m-scope-lbl{font-size:.68rem;font-weight:700;color:var(--n);margin-bottom:.3rem}
+.m-cb-row{display:flex;align-items:center;gap:.3rem;margin-bottom:.25rem;font-size:.67rem;color:#333}
+.m-cb-row input{accent-color:var(--b)}
+.m-sig-badge{display:inline-block;padding:.1rem .3rem;border-radius:4px;font-size:.59rem;font-weight:500;background:var(--bl);color:var(--b);margin-bottom:.12rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-progress{height:2px;background:var(--br);border-radius:2px;margin-bottom:.45rem}
+.m-progress-fill{height:100%;background:var(--b);border-radius:2px}
+
+/* Cover slide */
+.cover-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2.5rem;height:100%;background:linear-gradient(135deg,#0c1e38 0%,#0a2a50 60%,#0c1e38 100%)}
+.cover-logo{font-size:1.1rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.5rem;letter-spacing:.5px}
+.cover-title{font-size:2.6rem;font-weight:800;color:white;line-height:1.15;margin-bottom:.75rem}
+.cover-title span{color:#7ec8e3}
+.cover-sub{font-size:1rem;color:rgba(255,255,255,.6);margin-bottom:2.5rem;max-width:560px}
+.cover-cards{display:flex;gap:1.25rem;margin-bottom:2rem;flex-wrap:wrap;justify-content:center}
+.cover-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:1.25rem 1.5rem;width:240px;text-align:left}
+.cover-card-icon{font-size:1.5rem;margin-bottom:.5rem}
+.cover-card-title{font-size:.9rem;font-weight:700;color:white;margin-bottom:.4rem}
+.cover-card-desc{font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.5}
+.cover-note{font-size:.75rem;color:rgba(255,255,255,.3)}
+
+/* Summary slide */
+.summary-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;height:100%;background:linear-gradient(135deg,#0c1e38 0%,#0a2a50 100%)}
+.sum-title{font-size:1.8rem;font-weight:800;color:white;margin-bottom:.4rem;text-align:center}
+.sum-sub{font-size:.88rem;color:rgba(255,255,255,.55);margin-bottom:2rem;text-align:center}
+.sum-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem;width:100%;max-width:860px}
+.sum-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:1.25rem}
+.sum-card-title{font-size:.72rem;font-weight:700;color:#7ec8e3;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.75rem}
+.sum-metrics{display:flex;flex-direction:column;gap:.4rem}
+.sum-metric{display:flex;align-items:center;gap:.5rem}
+.sum-metric-val{font-size:1.3rem;font-weight:800;color:white;min-width:52px}
+.sum-metric-lbl{font-size:.75rem;color:rgba(255,255,255,.6)}
+.sum-cta{background:#0070c0;color:white;border:none;padding:.6rem 1.75rem;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="logo">BDP <span>Signal</span> Engine</div>
+  <div class="ctabs" id="ctabs">
+    <button class="ctab active" onclick="jumpTo(0)">Overview</button>
+    <button class="ctab" onclick="jumpTo(1)">Signal Engine</button>
+    <button class="ctab" onclick="jumpTo(6)">ISV Prospector</button>
+  </div>
+  <span class="counter" id="counter">1 / 11</span>
+  <button class="playbtn" id="playbtn" onclick="togglePlay()">▶ Auto-play</button>
+</header>
+
+<!-- TIMER BAR -->
+<div class="timerbar"><div class="timerfill" id="timerfill"></div></div>
+
+<!-- STAGE -->
+<main class="stage">
+
+<!-- ============================================================ SLIDE 0: Cover -->
+<section class="slide cover active" id="s0">
+<div class="cover-inner">
+  <div class="cover-logo">BDP ECOSYSTEMS</div>
+  <h1 class="cover-title">Signal <span>Intelligence</span><br>Platform</h1>
+  <p class="cover-sub">From market signal to warm connection — two tools that work together to drive co-sell growth</p>
+  <div class="cover-cards">
+    <div class="cover-card">
+      <div class="cover-card-icon">📡</div>
+      <div class="cover-card-title">Signal Engine</div>
+      <div class="cover-card-desc">For your ISV customers — monitors the market for companies that match their ideal buyer profile, surfacing warm connection paths via LinkedIn</div>
+    </div>
+    <div class="cover-card">
+      <div class="cover-card-icon">🔍</div>
+      <div class="cover-card-title">ISV Prospector</div>
+      <div class="cover-card-desc">For BDP — starts with signals to discover fast-cycle ISV candidates, filtered by sector and geography, then cross-references your network</div>
+    </div>
+  </div>
+  <div class="cover-note">Use arrow keys or click Next to step through · Press Auto-play for hands-free walkthrough</div>
+</div>
+</section>
+
+<!-- ============================================================ SLIDE 1: Dashboard -->
+<section class="slide" id="s1">
+<div class="sp">
+  <div class="sp-chapter">Signal Engine</div>
+  <div class="sp-step">Step 1 of 5</div>
+  <h2 class="sp-title">Track every ISV customer in one view</h2>
+  <p class="sp-desc">The dashboard shows all tracked ISVs — their onboarding status, how many buying signals are active, and how many warm prospect paths have been found.</p>
+  <ul class="sp-bullets">
+    <li>Add any ISV by entering their website URL</li>
+    <li>Claude AI auto-generates ICPs and buying signals from the company's own materials</li>
+    <li>Status tracks each ISV through onboarding → active → prospect-ready</li>
+  </ul>
+  <div class="sp-hl"><strong>13,417 LinkedIn connections</strong> are indexed and ready to match against any new prospect discovered for any company</div>
+</div>
+<div class="mp">
+  <div class="browser">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">localhost:5001/</div></div>
+    <div class="bcontent">
+      <div class="m-app">
+        <div class="m-hdr"><div class="m-hdr-logo">BDP <span>Signal</span> Engine</div><div class="m-hdr-nav"><a class="on" href="#">Dashboard</a><a href="#">ISV Prospector</a><a href="#">Digest</a></div></div>
+        <div class="m-body">
+          <div class="m-ph"><div><div class="m-h1">Supply Side Inventory</div><div class="m-sub">BDP Ecosystems — Signal Intelligence</div></div><button class="m-btn m-btn-p">+ Add Company</button></div>
+          <div class="m-stats">
+            <div class="m-stat"><div class="m-sv">4</div><div class="m-sl">Companies</div></div>
+            <div class="m-stat"><div class="m-sv">80</div><div class="m-sl">Total Prospects</div></div>
+            <div class="m-stat"><div class="m-sv">26</div><div class="m-sl">Network Matches</div></div>
+            <div class="m-stat"><div class="m-sv">142</div><div class="m-sl">API Calls</div></div>
+            <div class="m-stat"><div class="m-sv">$0.41</div><div class="m-sl">Est. Cost</div></div>
+          </div>
+          <div class="m-grid">
+            <div class="m-co hl">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.2rem"><div class="m-co-name">Camunda</div><span class="m-badge m-ba">active</span></div>
+              <div class="m-co-dom">camunda.com</div>
+              <div style="font-size:.6rem;color:#555;margin-bottom:.4rem">Business process automation platform for enterprise workflows</div>
+              <div class="m-co-meta"><span>3 ICPs</span><span>4 signals</span><span>23 prospects</span><span style="color:#155724;font-weight:600">8 warm</span></div>
+            </div>
+            <div class="m-co">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.2rem"><div class="m-co-name">SumSub</div><span class="m-badge m-ba">active</span></div>
+              <div class="m-co-dom">sumsub.com</div>
+              <div style="font-size:.6rem;color:#555;margin-bottom:.4rem">KYC/AML verification platform for regulated industries</div>
+              <div class="m-co-meta"><span>2 ICPs</span><span>3 signals</span><span>17 prospects</span><span style="color:#155724;font-weight:600">5 warm</span></div>
+            </div>
+            <div class="m-co">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.2rem"><div class="m-co-name">ThetaRay</div><span class="m-badge m-ba">active</span></div>
+              <div class="m-co-dom">thetaray.com</div>
+              <div style="font-size:.6rem;color:#555;margin-bottom:.4rem">AI-powered transaction monitoring for banks and fintechs</div>
+              <div class="m-co-meta"><span>3 ICPs</span><span>5 signals</span><span>31 prospects</span><span style="color:#155724;font-weight:600">11 warm</span></div>
+            </div>
+            <div class="m-co">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.2rem"><div class="m-co-name">Salt Edge</div><span class="m-badge m-bb">onboarding</span></div>
+              <div class="m-co-dom">saltedge.com</div>
+              <div style="font-size:.6rem;color:#555;margin-bottom:.4rem">Open banking API and PSD2 compliance platform</div>
+              <div class="m-co-meta"><span>2 ICPs</span><span>2 signals</span><span>9 prospects</span><span style="color:#155724;font-weight:600">2 warm</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="m-ftr">API calls: <strong>142</strong> &nbsp;·&nbsp; Est. cost: <strong>$0.41</strong> &nbsp;·&nbsp; Last scan: <strong>2026-04-29 08:00</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ SLIDE 2: ICP Analysis -->
+<section class="slide" id="s2">
+<div class="sp">
+  <div class="sp-chapter">Signal Engine</div>
+  <div class="sp-step">Step 2 of 5</div>
+  <h2 class="sp-title">Claude reads the ISV's materials and defines their ideal buyer</h2>
+  <p class="sp-desc">Upload pitch decks, ICP docs, or case studies. Claude extracts structured Ideal Customer Profiles — industry, company size, geography, buyer persona, and pain point.</p>
+  <ul class="sp-bullets">
+    <li>Works from any file type: PDF, Word, PowerPoint</li>
+    <li>ICPs are editable — the ISV can refine or add profiles</li>
+    <li>ICPs feed directly into signal and prospect generation</li>
+  </ul>
+</div>
+<div class="mp">
+  <div class="browser">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">localhost:5001/companies/camunda-com</div></div>
+    <div class="bcontent">
+      <div class="m-app">
+        <div class="m-hdr"><div class="m-hdr-logo">BDP <span>Signal</span> Engine</div><div class="m-hdr-nav"><a href="#">Dashboard</a><a class="on" href="#">Camunda</a></div></div>
+        <div class="m-body">
+          <div class="m-ph"><div><div class="m-h1">Camunda</div><div class="m-sub">camunda.com &nbsp;·&nbsp; <span class="m-badge m-ba">active</span></div></div></div>
+          <div class="m-tabs"><div class="m-tab">Overview</div><div class="m-tab on">ICPs</div><div class="m-tab">Signals</div><div class="m-tab">Prospects</div><div class="m-tab">Files</div></div>
+          <div class="m-icp-grid">
+            <div class="m-icp">
+              <div class="m-icp-name">Digital-First European Banks</div>
+              <div class="m-row"><div class="m-lbl">Industry</div><div class="m-val">Banking &amp; Financial Services</div></div>
+              <div class="m-row"><div class="m-lbl">Size</div><div class="m-val">$1B – $50B revenue</div></div>
+              <div class="m-row"><div class="m-lbl">Geography</div><div class="m-val">EU, UK, DACH</div></div>
+              <div class="m-row"><div class="m-lbl">Buyer</div><div class="m-val">CTO, CIO, Head of Digital</div></div>
+              <div class="m-row"><div class="m-lbl">Pain point</div><div class="m-val">Legacy process automation, compliance workflows</div></div>
+            </div>
+            <div class="m-icp">
+              <div class="m-icp-name">Insurance Modernizers</div>
+              <div class="m-row"><div class="m-lbl">Industry</div><div class="m-val">Insurance</div></div>
+              <div class="m-row"><div class="m-lbl">Size</div><div class="m-val">$500M+ GWP</div></div>
+              <div class="m-row"><div class="m-lbl">Geography</div><div class="m-val">Global, EU focus</div></div>
+              <div class="m-row"><div class="m-lbl">Buyer</div><div class="m-val">Chief Digital Officer, COO</div></div>
+              <div class="m-row"><div class="m-lbl">Pain point</div><div class="m-val">Claims automation, underwriting workflows</div></div>
+            </div>
+            <div class="m-icp">
+              <div class="m-icp-name">Public Sector Modernizers</div>
+              <div class="m-row"><div class="m-lbl">Industry</div><div class="m-val">Government &amp; Public Sector</div></div>
+              <div class="m-row"><div class="m-lbl">Size</div><div class="m-val">National / regional agencies</div></div>
+              <div class="m-row"><div class="m-lbl">Geography</div><div class="m-val">EU, Australia, Singapore</div></div>
+              <div class="m-row"><div class="m-lbl">Buyer</div><div class="m-val">CIO, Digital Transformation Lead</div></div>
+              <div class="m-row"><div class="m-lbl">Pain point</div><div class="m-val">Citizen service digitization, ERP workflow integration</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ SLIDE 3: Buying Signals -->
+<section class="slide" id="s3">
+<div class="sp">
+  <div class="sp-chapter">Signal Engine</div>
+  <div class="sp-step">Step 3 of 5</div>
+  <h2 class="sp-title">AI generates the exact signals that mean "this buyer is ready"</h2>
+  <p class="sp-desc">Claude uses the ICPs to generate actionable buying intent signals — real-world events that indicate an enterprise is likely to evaluate and purchase soon.</p>
+  <ul class="sp-bullets">
+    <li>Each signal includes 2–3 tailored Google News search queries</li>
+    <li>Signals are reviewed and confirmed before scanning begins</li>
+    <li>Signal strength rated high / medium / low</li>
+  </ul>
+  <div class="sp-hl">Confirmed signals run automatically every <strong>6 hours</strong> — new prospects surface without manual input</div>
+</div>
+<div class="mp">
+  <div class="browser">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">localhost:5001/companies/camunda-com</div></div>
+    <div class="bcontent">
+      <div class="m-app">
+        <div class="m-hdr"><div class="m-hdr-logo">BDP <span>Signal</span> Engine</div><div class="m-hdr-nav"><a href="#">Dashboard</a><a class="on" href="#">Camunda</a></div></div>
+        <div class="m-body">
+          <div class="m-tabs"><div class="m-tab">Overview</div><div class="m-tab">ICPs</div><div class="m-tab on">Signals</div><div class="m-tab">Prospects</div></div>
+          <div class="m-sig">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="m-sig-name">✓ New CDO / CTO hired at European bank</div><span class="m-badge m-bh">high</span></div>
+            <div class="m-sig-desc">When a bank appoints a Chief Digital Officer or new CTO, process automation becomes a top-3 initiative within 90 days.</div>
+            <div class="m-queries"><span class="m-qtag">European bank chief digital officer appointed</span><span class="m-qtag">bank CTO hire digital transformation</span><span class="m-qtag">financial services CDO new role 2026</span></div>
+          </div>
+          <div class="m-sig">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="m-sig-name">✓ Core banking system replacement announced</div><span class="m-badge m-bh">high</span></div>
+            <div class="m-sig-desc">Core banking migrations require workflow re-engineering — Camunda is shortlisted in 70%+ of these deals.</div>
+            <div class="m-queries"><span class="m-qtag">bank core banking system replacement</span><span class="m-qtag">banking legacy modernization project</span></div>
+          </div>
+          <div class="m-sig">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="m-sig-name">✓ Insurance company announces claims automation</div><span class="m-badge m-bm">medium</span></div>
+            <div class="m-sig-desc">Claims digitization projects almost always require a BPMN orchestration layer within 6 months.</div>
+            <div class="m-queries"><span class="m-qtag">insurance claims automation digital</span><span class="m-qtag">insurer process automation initiative</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ SLIDE 4: Prospect Scan -->
+<section class="slide" id="s4">
+<div class="sp">
+  <div class="sp-chapter">Signal Engine</div>
+  <div class="sp-step">Step 4 of 5</div>
+  <h2 class="sp-title">Google News × Claude = real buying intent, not keyword noise</h2>
+  <p class="sp-desc">The engine fetches news across all signal queries, then Claude reads every article and extracts only the companies showing genuine buying intent — with a confidence score and reason.</p>
+  <ul class="sp-bullets">
+    <li>One Claude call per signal processes up to 30 articles simultaneously</li>
+    <li>Named contacts mentioned in the article are extracted automatically</li>
+    <li>Deduplication prevents the same company appearing twice</li>
+  </ul>
+</div>
+<div class="mp">
+  <div class="browser">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">localhost:5001/companies/camunda-com/prospects</div></div>
+    <div class="bcontent">
+      <div class="m-app">
+        <div class="m-hdr"><div class="m-hdr-logo">BDP <span>Signal</span> Engine</div><div class="m-hdr-nav"><a href="#">Dashboard</a><a class="on" href="#">Camunda — Prospects</a></div></div>
+        <div class="m-body">
+          <div class="m-alert"><div class="m-spin"></div>Scanning 4 confirmed signals across Google News… typically completes in 60–90 seconds</div>
+          <div class="m-actionbar">
+            <span style="font-weight:600;color:var(--n);font-size:.68rem">Filter:</span>
+            <span class="m-badge m-ba" style="font-size:.6rem">All signals</span>
+            <span class="m-badge m-bl" style="font-size:.6rem">All confidence</span>
+            <span class="m-badge m-bl" style="font-size:.6rem">All matches</span>
+          </div>
+          <table class="m-table">
+            <thead><tr><th>Company</th><th>Signal</th><th>Confidence</th><th>Why</th><th>Source</th><th>Network</th></tr></thead>
+            <tbody>
+              <tr class="hlg"><td><strong>ING Group</strong></td><td>New CDO hired</td><td><span class="m-badge m-bh">high</span></td><td style="font-size:.6rem;max-width:120px">Appointed Roel Louwhoff as Chief Digital Officer, driving automation agenda</td><td><a style="color:var(--b);font-size:.6rem" href="#">Reuters</a><div style="font-size:.58rem;color:var(--gr)">2026-04-21</div></td><td>—</td></tr>
+              <tr class="hlg"><td><strong>Deutsche Bank</strong></td><td>Core banking</td><td><span class="m-badge m-bh">high</span></td><td style="font-size:.6rem;max-width:120px">Announced €1.2B core infrastructure modernization program</td><td><a style="color:var(--b);font-size:.6rem" href="#">FT</a><div style="font-size:.58rem;color:var(--gr)">2026-04-18</div></td><td>—</td></tr>
+              <tr><td><strong>Allianz SE</strong></td><td>Claims automation</td><td><span class="m-badge m-bm">medium</span></td><td style="font-size:.6rem;max-width:120px">Launching AI-powered claims processing initiative across EU markets</td><td><a style="color:var(--b);font-size:.6rem" href="#">Bloomberg</a><div style="font-size:.58rem;color:var(--gr)">2026-04-15</div></td><td>—</td></tr>
+              <tr><td><strong>Société Générale</strong></td><td>New CDO hired</td><td><span class="m-badge m-bm">medium</span></td><td style="font-size:.6rem;max-width:120px">New CIO mandate includes full BPM overhaul across retail banking</td><td><a style="color:var(--b);font-size:.6rem" href="#">Les Echos</a><div style="font-size:.58rem;color:var(--gr)">2026-04-12</div></td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ SLIDE 5: Network Match -->
+<section class="slide" id="s5">
+<div class="sp">
+  <div class="sp-chapter">Signal Engine</div>
+  <div class="sp-step">Step 5 of 5</div>
+  <h2 class="sp-title">Every prospect is mapped against 13,000+ LinkedIn connections</h2>
+  <p class="sp-desc">The engine fuzzy-matches each prospect company against the full LinkedIn export. Direct connections at the company appear by name and title — giving a warm path to every hot lead.</p>
+  <ul class="sp-bullets">
+    <li>Direct 1° connections shown with name, title, and LinkedIn URL</li>
+    <li>Results exportable as CSV or printable as a one-page briefing report</li>
+    <li>Prospect status tracked: New → Contacted → Intro Made → In Progress</li>
+  </ul>
+  <div class="sp-hl">Prospects sorted automatically: <strong>warm connections first</strong>, then by confidence, then recency</div>
+</div>
+<div class="mp">
+  <div class="browser">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">localhost:5001/companies/camunda-com/prospects</div></div>
+    <div class="bcontent">
+      <div class="m-app">
+        <div class="m-hdr"><div class="m-hdr-logo">BDP <span>Signal</span> Engine</div><div class="m-hdr-nav"><a href="#">Dashboard</a><a class="on" href="#">Camunda — Prospects</a></div></div>
+        <div class="m-body">
+          <div class="m-actionbar" style="margin-bottom:.4rem">
+            <span style="font-size:.64rem;color:var(--gr)">23 prospects &nbsp;·&nbsp; <strong style="color:#155724">8 with direct connections</strong></span>
+            <button class="m-btn m-btn-s m-btn-sm" style="margin-left:auto">Export CSV</button>
+            <button class="m-btn m-btn-s m-btn-sm">Report</button>
+          </div>
+          <table class="m-table">
+            <thead><tr><th>Company</th><th>Signal</th><th>Conf.</th><th>Why</th><th>Source</th><th>Network Matches</th></tr></thead>
+            <tbody>
+              <tr class="hlg"><td><strong>ING Group</strong></td><td style="font-size:.6rem">New CDO hired</td><td><span class="m-badge m-bh">high</span></td><td style="font-size:.6rem;max-width:100px">CDO mandate covers BPM overhaul</td><td style="font-size:.6rem"><a style="color:var(--b)" href="#">Reuters</a></td><td><div><span class="m-conn">● Lars van der Berg</span><div style="font-size:.58rem;color:var(--gr)">Partnerships Director &nbsp;<span class="m-badge m-bd" style="font-size:.55rem">direct</span></div></div><div style="margin-top:.2rem"><span class="m-conn">● Sophie Hendriks</span><div style="font-size:.58rem;color:var(--gr)">Head of Digital &nbsp;<span class="m-badge m-bd" style="font-size:.55rem">direct</span></div></div></td></tr>
+              <tr class="hlg"><td><strong>Deutsche Bank</strong></td><td style="font-size:.6rem">Core banking</td><td><span class="m-badge m-bh">high</span></td><td style="font-size:.6rem;max-width:100px">€1.2B infrastructure overhaul</td><td style="font-size:.6rem"><a style="color:var(--b)" href="#">FT</a></td><td><div><span class="m-conn">● Marcus Bauer</span><div style="font-size:.58rem;color:var(--gr)">VP Technology &nbsp;<span class="m-badge m-bd" style="font-size:.55rem">direct</span></div></div></td></tr>
+              <tr class="hlg"><td><strong>Allianz SE</strong></td><td style="font-size:.6rem">Claims automation</td><td><span class="m-badge m-bm">medium</span></td><td style="font-size:.6rem;max-width:100px">AI claims initiative across EU</td><td style="font-size:.6rem"><a style="color:var(--b)" href="#">Bloomberg</a></td><td><div><span class="m-conn">● Thomas Keller</span><div style="font-size:.58rem;color:var(--gr)">Innovation Lead &nbsp;<span class="m-badge m-bd" style="font-size:.55rem">direct</span></div></div></td></tr>
+              <tr><td><strong>Société Générale</strong></td><td style="font-size:.6rem">New CDO hired</td><td><span class="m-badge m-bm">medium</span></td><td style="font-size:.6rem;max-width:100px">New CIO BPM mandate</td><td style="font-size:.6rem"><a style="color:var(--b)" href="#">Les Echos</a></td><td style="color:var(--gr);font-size:.6rem">No direct connections</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ SLIDE 6: ISV Prospector – Signal Selection -->
+<section class="slide" id="s6">
+<div class="sp">
+  <div class="sp-chapter">ISV Prospector</div>
+  <div class="sp-step">Step 1 of 4</div>
+  <h2 class="sp-title">Start with the signal, not the company</h2>
+  <p class="sp-desc">The ISV Prospector inverts the flow — instead of tracking a known customer, it scans the market to find ISVs that are already showing buying-readiness signals, then qualifies them as BDP pipeline.</p>
+  <ul class="sp-bullets">
+    <li>5 preset signals covering the most reliable ISV growth indicators</li>
+    <li>Each signal is fully editable — refine the language to match what you're looking for</li>
+    <li>Sector and geography filters shape every search query Claude generates</li>
+  </ul>
+</div>
+<div class="mp">
+  <div class="browser">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">localhost:5001/prospector</div></div>
+    <div class="bcontent">
+      <div class="m-app">
+        <div class="m-hdr"><div class="m-hdr-logo">BDP <span>Signal</span> Engine</div><div class="m-hdr-nav"><a href="#">Dashboard</a><a class="on" href="#">ISV Prospector</a><a href="#">Digest</a></div></div>
+        <div class="m-body">
+          <div class="m-ph"><div><div class="m-h1">ISV Prospector</div><div class="m-sub">Signal-driven pre-qualification of fast-cycle ISV candidates</div></div></div>
+          <div class="m-card">
+            <div style="font-size:.73rem;font-weight:700;color:var(--n);margin-bottom:.5rem">Step 1 — Choose Signals</div>
+            <div class="m-chk"><input type="checkbox" checked disabled><span class="m-chk-txt" style="font-size:.67rem">ISVs announcing new strategic partnerships</span></div>
+            <div class="m-chk"><input type="checkbox" checked disabled><span class="m-chk-txt" style="font-size:.67rem">ISVs go-live or listed in new leading marketplaces</span></div>
+            <div class="m-chk"><input type="checkbox" checked disabled><span class="m-chk-txt" style="font-size:.67rem">ISVs actively hiring for BD and Partnerships roles</span></div>
+            <div class="m-chk"><input type="checkbox" checked disabled><span class="m-chk-txt" style="font-size:.67rem">ISVs recently raised significant funding</span></div>
+            <div class="m-chk"><input type="checkbox" checked disabled><span class="m-chk-txt" style="font-size:.67rem">ISVs announcing expansion to new countries or regions</span></div>
+            <div class="m-scope">
+              <div>
+                <div class="m-scope-lbl">Sector</div>
+                <div class="m-cb-row"><input type="checkbox" checked disabled><span>Fintech</span></div>
+                <div class="m-cb-row"><input type="checkbox" checked disabled><span>AI</span></div>
+                <div class="m-cb-row"><input type="checkbox" disabled><span>All sectors</span></div>
+              </div>
+              <div>
+                <div class="m-scope-lbl">Geography</div>
+                <div class="m-cb-row"><input type="checkbox" checked disabled><span>Israel</span></div>
+                <div class="m-cb-row"><input type="checkbox" checked disabled><span>APAC</span></div>
+                <div class="m-cb-row"><input type="checkbox" disabled><span>All geographies</span></div>
+              </div>
+            </div>
+          </div>
+          <button class="m-btn m-btn-p" style="font-size:.72rem;padding:.35rem .9rem">Run Signal Scan →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ SLIDE 7: ISV Prospector – Scanning -->
+<section class="slide" id="s7">
+<div class="sp">
+  <div class="sp-chapter">ISV Prospector</div>
+  <div class="sp-step">Step 2 of 4</div>
+  <h2 class="sp-title">Claude generates geo-targeted search queries, then reads the news</h2>
+  <p class="sp-desc">One Claude call generates 3 targeted queries per signal — every query includes geography and sector keywords. The engine then fetches and processes up to 20 articles per query.</p>
+  <ul class="sp-bullets">
+    <li>~300 article slots scanned per run (5 signals × 3 queries × 20 articles)</li>
+    <li>Claude extracts the ISV from each article — not the partner, investor, or enterprise</li>
+    <li>Geography is enforced both in the prompt and as a post-processing filter</li>
+  </ul>
+  <div class="sp-hl">Total API cost per scan: typically <strong>$0.04 – $0.08</strong></div>
+</div>
+<div class="mp">
+  <div class="browser">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">localhost:5001/prospector/results/a3f2b1c0</div></div>
+    <div class="bcontent">
+      <div class="m-app">
+        <div class="m-hdr"><div class="m-hdr-logo">BDP <span>Signal</span> Engine</div><div class="m-hdr-nav"><a href="#">Dashboard</a><a class="on" href="#">ISV Prospector</a></div></div>
+        <div class="m-body">
+          <div class="m-ph"><div><div class="m-h1">ISV Prospector — Results</div><div class="m-sub">Run a3f2b1c0 · 2026-04-29 · 5 signals · Fintech + AI · Israel + APAC</div></div><button class="m-btn m-btn-s m-btn-sm">← New Scan</button></div>
+          <div class="m-alert"><div class="m-spin"></div>Scanning signals across Google News and extracting ISVs with Claude… this takes 1–2 minutes</div>
+          <div style="font-size:.68rem;color:var(--gr);margin-bottom:.5rem">Progress:</div>
+          <div style="margin-bottom:.3rem;font-size:.67rem;color:#333">✓ Generated search queries for 5 signals</div>
+          <div style="margin-bottom:.3rem;font-size:.67rem;color:#333">✓ <strong>Signal 1:</strong> ISVs announcing new strategic partnerships → 47 articles → 9 ISVs extracted</div>
+          <div style="margin-bottom:.3rem;font-size:.67rem;color:#333">✓ <strong>Signal 2:</strong> ISVs listed in new marketplaces → 38 articles → 7 ISVs extracted</div>
+          <div style="margin-bottom:.3rem;font-size:.67rem;color:#333">✓ <strong>Signal 3:</strong> ISVs hiring BD/Partnerships roles → 42 articles → 11 ISVs extracted</div>
+          <div style="margin-bottom:.3rem;font-size:.67rem;color:var(--b)"><div class="m-spin" style="display:inline-block;margin-right:.3rem"></div><strong>Signal 4:</strong> ISVs recently raised significant funding — scanning…</div>
+          <div style="margin-bottom:.3rem;font-size:.67rem;color:var(--gr)">◌ Signal 5: ISVs announcing expansion — queued</div>
+          <div class="m-progress" style="margin-top:.75rem"><div class="m-progress-fill" style="width:65%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ SLIDE 8: ISV Prospector – Results -->
+<section class="slide" id="s8">
+<div class="sp">
+  <div class="sp-chapter">ISV Prospector</div>
+  <div class="sp-step">Step 3 of 4</div>
+  <h2 class="sp-title">Results table — filterable, sortable, ready to act on</h2>
+  <p class="sp-desc">Companies that triggered multiple signals are automatically merged into a single record and ranked higher. Signal strength reflects both article evidence and multi-signal overlap.</p>
+  <ul class="sp-bullets">
+    <li>Filter by strength, sector, signal type, or geography</li>
+    <li>Multi-signal companies flagged visually — strongest pipeline signal</li>
+    <li>People mentioned in source articles appear inline</li>
+  </ul>
+</div>
+<div class="mp">
+  <div class="browser">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">localhost:5001/prospector/results/a3f2b1c0</div></div>
+    <div class="bcontent">
+      <div class="m-app">
+        <div class="m-hdr"><div class="m-hdr-logo">BDP <span>Signal</span> Engine</div><div class="m-hdr-nav"><a href="#">Dashboard</a><a class="on" href="#">ISV Prospector</a></div></div>
+        <div class="m-body">
+          <div class="m-actionbar" style="flex-wrap:wrap;gap:.3rem">
+            <span style="font-size:.63rem;font-weight:600;color:var(--n)">Filter:</span>
+            <span class="m-badge m-ba" style="font-size:.58rem">All</span>
+            <span class="m-badge m-bh" style="font-size:.58rem">High</span>
+            <span class="m-badge m-bm" style="font-size:.58rem">Medium</span>
+            <span class="m-badge m-bl" style="font-size:.58rem">Low</span>
+            <span style="margin-left:auto;font-size:.62rem;color:var(--gr)">42 ISVs</span>
+          </div>
+          <table class="m-table">
+            <thead><tr><th style="width:20px"></th><th>Company</th><th>Countries</th><th>Sector</th><th>Signals</th><th>Strength</th><th>Source</th><th>People</th></tr></thead>
+            <tbody>
+              <tr class="hlg">
+                <td><input type="checkbox" checked disabled style="width:10px"></td>
+                <td><div class="m-strong">Firefly AI</div><span style="font-size:.6rem;color:var(--b)">fireflyai.io</span></td>
+                <td style="font-size:.62rem">Israel</td>
+                <td style="font-size:.62rem">AI/ML</td>
+                <td><div class="m-sig-badge">ISVs raising funding</div><div class="m-sig-badge">ISVs hiring BD roles</div></td>
+                <td><span class="m-badge m-bh">high</span><div style="font-size:.6rem;color:var(--b);font-weight:700;margin-top:.15rem">2 signals</div></td>
+                <td style="font-size:.6rem"><a style="color:var(--b)" href="#">TechCrunch</a><div style="color:var(--gr)">2026-04-22</div></td>
+                <td style="font-size:.62rem">Sivan Tehila <span style="color:var(--gr)">· CEO</span></td>
+              </tr>
+              <tr class="hlg">
+                <td><input type="checkbox" checked disabled style="width:10px"></td>
+                <td><div class="m-strong">Tipalti</div><span style="font-size:.6rem;color:var(--b)">tipalti.com</span></td>
+                <td style="font-size:.62rem">Israel</td>
+                <td style="font-size:.62rem">Fintech</td>
+                <td><div class="m-sig-badge">ISVs announcing partnerships</div><div class="m-sig-badge">ISVs expanding regions</div></td>
+                <td><span class="m-badge m-bh">high</span><div style="font-size:.6rem;color:var(--b);font-weight:700;margin-top:.15rem">2 signals</div></td>
+                <td style="font-size:.6rem"><a style="color:var(--b)" href="#">PR Newswire</a><div style="color:var(--gr)">2026-04-20</div></td>
+                <td style="font-size:.62rem">Chen Amit <span style="color:var(--gr)">· CEO</span></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" disabled style="width:10px"></td>
+                <td><div class="m-strong">Nium</div><span style="font-size:.6rem;color:var(--b)">nium.com</span></td>
+                <td style="font-size:.62rem">Singapore</td>
+                <td style="font-size:.62rem">Fintech</td>
+                <td><div class="m-sig-badge">ISVs raising significant funding</div></td>
+                <td><span class="m-badge m-bh">high</span></td>
+                <td style="font-size:.6rem"><a style="color:var(--b)" href="#">Bloomberg</a><div style="color:var(--gr)">2026-04-19</div></td>
+                <td style="font-size:.62rem">Prajit Nanu <span style="color:var(--gr)">· CEO</span></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" disabled style="width:10px"></td>
+                <td><div class="m-strong">Rapyd</div><span style="font-size:.6rem;color:var(--b)">rapyd.com</span></td>
+                <td style="font-size:.62rem">Israel</td>
+                <td style="font-size:.62rem">Fintech</td>
+                <td><div class="m-sig-badge">ISVs listed in new marketplaces</div></td>
+                <td><span class="m-badge m-bm">medium</span></td>
+                <td style="font-size:.6rem"><a style="color:var(--b)" href="#">Finextra</a><div style="color:var(--gr)">2026-04-17</div></td>
+                <td style="font-size:.62rem">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ SLIDE 9: ISV Prospector – Network Match -->
+<section class="slide" id="s9">
+<div class="sp">
+  <div class="sp-chapter">ISV Prospector</div>
+  <div class="sp-step">Step 4 of 4</div>
+  <h2 class="sp-title">Select ISVs → instant LinkedIn network scan</h2>
+  <p class="sp-desc">Choose any or all discovered ISVs and run Step 3: the engine cross-references each company against your 13,000+ LinkedIn connections. Warm paths appear immediately in the final column.</p>
+  <ul class="sp-bullets">
+    <li>Export the full table to CSV for CRM import</li>
+    <li>Companies with connections flow directly into the Signal Engine for full monitoring</li>
+    <li>Entire workflow — from signal selection to warm path — takes under 3 minutes</li>
+  </ul>
+  <div class="sp-hl">Pre-qualified ISVs with warm connections are the highest-priority BDP pipeline — <strong>signal fit + network access + sector match</strong></div>
+</div>
+<div class="mp">
+  <div class="browser">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">localhost:5001/prospector/results/a3f2b1c0</div></div>
+    <div class="bcontent">
+      <div class="m-app">
+        <div class="m-hdr"><div class="m-hdr-logo">BDP <span>Signal</span> Engine</div><div class="m-hdr-nav"><a href="#">Dashboard</a><a class="on" href="#">ISV Prospector</a></div></div>
+        <div class="m-body">
+          <div class="m-actionbar" style="flex-wrap:wrap;gap:.3rem">
+            <span style="font-size:.62rem;color:var(--gr)">2 selected</span>
+            <button class="m-btn m-btn-p m-btn-sm" style="margin-left:auto">Step 3: Run Network Scan on Selected</button>
+            <button class="m-btn m-btn-s m-btn-sm">Export CSV</button>
+          </div>
+          <div class="m-alert" style="background:var(--gb);border-color:#c3e6cb;color:var(--g)">Network scan complete — 2026-04-29 14:32. Connections shown in rightmost column.</div>
+          <table class="m-table">
+            <thead><tr><th style="width:20px"></th><th>Company</th><th>Countries</th><th>Sector</th><th>Signals</th><th>Strength</th><th>Source</th><th>Network Matches</th></tr></thead>
+            <tbody>
+              <tr class="hlg">
+                <td><input type="checkbox" checked disabled style="width:10px"></td>
+                <td><div class="m-strong">Firefly AI</div><span style="font-size:.6rem;color:var(--b)">fireflyai.io</span></td>
+                <td style="font-size:.62rem">Israel</td>
+                <td style="font-size:.62rem">AI/ML</td>
+                <td><div class="m-sig-badge">Raising funding</div><div class="m-sig-badge">Hiring BD</div></td>
+                <td><span class="m-badge m-bh">high</span><div style="font-size:.6rem;color:var(--b);font-weight:700">2 signals</div></td>
+                <td style="font-size:.6rem"><a style="color:var(--b)" href="#">TechCrunch</a></td>
+                <td>
+                  <div style="margin-bottom:.25rem"><span class="m-conn">● Avi Goldstein</span><div style="font-size:.58rem;color:var(--gr)">VP Partnerships <span class="m-badge m-bd" style="font-size:.55rem">direct</span></div></div>
+                  <div><span class="m-conn">● Noa Shapiro</span><div style="font-size:.58rem;color:var(--gr)">Head of BD <span class="m-badge m-bd" style="font-size:.55rem">direct</span></div></div>
+                </td>
+              </tr>
+              <tr class="hlg">
+                <td><input type="checkbox" checked disabled style="width:10px"></td>
+                <td><div class="m-strong">Tipalti</div><span style="font-size:.6rem;color:var(--b)">tipalti.com</span></td>
+                <td style="font-size:.62rem">Israel</td>
+                <td style="font-size:.62rem">Fintech</td>
+                <td><div class="m-sig-badge">Partnerships</div><div class="m-sig-badge">Expansion</div></td>
+                <td><span class="m-badge m-bh">high</span><div style="font-size:.6rem;color:var(--b);font-weight:700">2 signals</div></td>
+                <td style="font-size:.6rem"><a style="color:var(--b)" href="#">PR Newswire</a></td>
+                <td>
+                  <div><span class="m-conn">● Ronen Morecki</span><div style="font-size:.58rem;color:var(--gr)">CRO <span class="m-badge m-bd" style="font-size:.55rem">direct</span></div></div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" disabled style="width:10px"></td>
+                <td><div class="m-strong">Nium</div><span style="font-size:.6rem;color:var(--b)">nium.com</span></td>
+                <td style="font-size:.62rem">Singapore</td>
+                <td style="font-size:.62rem">Fintech</td>
+                <td><div class="m-sig-badge">Raising funding</div></td>
+                <td><span class="m-badge m-bh">high</span></td>
+                <td style="font-size:.6rem"><a style="color:var(--b)" href="#">Bloomberg</a></td>
+                <td style="font-size:.62rem;color:var(--gr)">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ SLIDE 10: Summary -->
+<section class="slide summary" id="s10">
+<div class="summary-inner">
+  <h2 class="sum-title">From signal to warm connection in under 3 minutes</h2>
+  <p class="sum-sub">Two tools, one platform, zero manual research</p>
+  <div class="sum-grid">
+    <div class="sum-card">
+      <div class="sum-card-title">Signal Engine</div>
+      <div class="sum-metrics">
+        <div class="sum-metric"><div class="sum-metric-val">5</div><div class="sum-metric-lbl">steps from URL to warm prospect list</div></div>
+        <div class="sum-metric"><div class="sum-metric-val">6h</div><div class="sum-metric-lbl">automated re-scan interval</div></div>
+        <div class="sum-metric"><div class="sum-metric-val">∞</div><div class="sum-metric-lbl">ISV customers tracked simultaneously</div></div>
+        <div class="sum-metric"><div class="sum-metric-val">CSV</div><div class="sum-metric-lbl">one-click export + printable briefing</div></div>
+      </div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-card-title">ISV Prospector</div>
+      <div class="sum-metrics">
+        <div class="sum-metric"><div class="sum-metric-val">5</div><div class="sum-metric-lbl">preset signals, fully editable</div></div>
+        <div class="sum-metric"><div class="sum-metric-val">~300</div><div class="sum-metric-lbl">articles scanned per run</div></div>
+        <div class="sum-metric"><div class="sum-metric-val">geo</div><div class="sum-metric-lbl">enforced at query + extraction level</div></div>
+        <div class="sum-metric"><div class="sum-metric-val">&lt;$0.10</div><div class="sum-metric-lbl">API cost per full scan</div></div>
+      </div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-card-title">Shared Infrastructure</div>
+      <div class="sum-metrics">
+        <div class="sum-metric"><div class="sum-metric-val">13K+</div><div class="sum-metric-lbl">LinkedIn connections indexed</div></div>
+        <div class="sum-metric"><div class="sum-metric-val">Claude</div><div class="sum-metric-lbl">Sonnet 4.x for all enrichment</div></div>
+        <div class="sum-metric"><div class="sum-metric-val">Local</div><div class="sum-metric-lbl">runs on your machine, your data</div></div>
+        <div class="sum-metric"><div class="sum-metric-val">Daily</div><div class="sum-metric-lbl">automated digest at 8 AM</div></div>
+      </div>
+    </div>
+  </div>
+  <button class="sum-cta" onclick="jumpTo(0)">↺ Restart demo</button>
+</div>
+</section>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<footer class="bottomnav">
+  <button class="navbtn" id="prevbtn" onclick="go(-1)" disabled>← Prev</button>
+  <div class="dots" id="dots"></div>
+  <button class="navbtn" id="nextbtn" onclick="go(1)">Next →</button>
+</footer>
+
+</div><!-- /deck -->
+
+<script>
+const TOTAL = 11;
+let cur = 0, playing = false, autoTimer = null, fillTimer = null, fillStart = null;
+const DELAY = 7000;
+
+const slides = () => document.querySelectorAll('.slide');
+const slide = n => document.getElementById('s' + n);
+
+function showSlide(n) {
+  if (n < 0 || n >= TOTAL) return;
+  slide(cur).classList.remove('active');
+  cur = n;
+  slide(cur).classList.add('active');
+  updateUI();
+  if (playing) startFill();
+}
+
+function go(d) { stopFill(); showSlide(cur + d); if (playing) startFill(); }
+function jumpTo(n) { stopFill(); showSlide(n); if (playing) startFill(); }
+
+function updateUI() {
+  document.getElementById('counter').textContent = (cur + 1) + ' / ' + TOTAL;
+  document.getElementById('prevbtn').disabled = cur === 0;
+  document.getElementById('nextbtn').disabled = cur === TOTAL - 1;
+  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === cur));
+  // chapter tabs
+  const ch = cur === 0 ? 0 : cur <= 5 ? 1 : cur >= 10 ? 0 : 2;
+  document.querySelectorAll('.ctab').forEach((t, i) => t.classList.toggle('active', i === ch));
+}
+
+function startFill() {
+  stopFill();
+  fillStart = Date.now();
+  const bar = document.getElementById('timerfill');
+  bar.style.transition = 'none'; bar.style.width = '0%';
+  requestAnimationFrame(() => { bar.style.transition = `width ${DELAY}ms linear`; bar.style.width = '100%'; });
+  autoTimer = setTimeout(() => { if (cur < TOTAL - 1) go(1); else stopPlay(); }, DELAY);
+}
+
+function stopFill() {
+  clearTimeout(autoTimer);
+  const bar = document.getElementById('timerfill');
+  bar.style.transition = 'none'; bar.style.width = '0%';
+}
+
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('playbtn');
+  if (playing) { btn.textContent = '⏸ Pause'; btn.classList.add('playing'); startFill(); }
+  else { btn.textContent = '▶ Auto-play'; btn.classList.remove('playing'); stopFill(); }
+}
+
+function stopPlay() { playing = false; document.getElementById('playbtn').textContent = '▶ Auto-play'; document.getElementById('playbtn').classList.remove('playing'); stopFill(); }
+
+// Build dots
+const dotsCont = document.getElementById('dots');
+for (let i = 0; i < TOTAL; i++) {
+  const d = document.createElement('button');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.title = 'Slide ' + (i + 1);
+  d.onclick = () => jumpTo(i);
+  dotsCont.appendChild(d);
+}
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { stopFill(); go(1); if(playing) startFill(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { stopFill(); go(-1); if(playing) startFill(); }
+  else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+});
+
+updateUI();
+</script>
+</body>
+</html>
