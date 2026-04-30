@@ -146,6 +146,7 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,-apple-system,'Segoe
 .cover-note{font-size:.68rem;color:rgba(255,255,255,.22)}
 .sum-cta{background:#1565c0;color:white;border:none;padding:.55rem 1.6rem;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;transition:background .15s}
 .sum-cta:hover{background:#1251a0}
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.75rem}
 
 @media (max-width:720px){
   html,body{height:auto;overflow-y:auto}
@@ -168,6 +169,8 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,-apple-system,'Segoe
   .dots{display:none}
   .m-grid{grid-template-columns:1fr 1fr}
   .m-icp-grid{grid-template-columns:1fr}
+  .export-grid{grid-template-columns:1fr}
+  .cover-inner{padding:1.5rem 1rem;overflow-y:auto}
 }
 </style>
 </head>
@@ -694,7 +697,7 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,-apple-system,'Segoe
       <h2 style="font-size:2rem;font-weight:800;color:white;margin-bottom:.5rem">Export in one click</h2>
       <p style="font-size:.86rem;color:rgba(255,255,255,.55)">Every prospect list exports instantly — flat CSV for your CRM, or a formatted HTML briefing ready to share</p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.75rem">
+    <div class="export-grid">
       <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:1.25rem">
         <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1rem">
           <div style="font-size:1.4rem">📊</div>
